@@ -109,6 +109,8 @@ jobs:
           p = pathlib.Path("android/app/build.gradle")
           content = p.read_text()
 
+          # 1. Add the signingConfigs block (holds the keystore credentials)
+          #    right after "android {", only if not already present.
           signing_config = '''
           signingConfigs {
               release {
@@ -127,9 +129,20 @@ jobs:
                   1,
               )
 
+          # 2. Point buildTypes.release at that signingConfig. We must only
+          #    touch the "release {" inside buildTypes, NOT the "release {"
+          #    inside the signingConfigs block we just added above - so we
+          #    search for "release {" starting AFTER "buildTypes {".
           marker = "signingConfig signingConfigs.release"
           if marker not in content:
-              content = content.replace("release {", "release {\n            " + marker, 1)
+              bt_index = content.index("buildTypes {")
+              rel_index = content.index("release {", bt_index)
+              insert_at = rel_index + len("release {")
+              content = (
+                  content[:insert_at]
+                  + "\n            " + marker
+                  + content[insert_at:]
+              )
 
           p.write_text(content)
           print("Patched build.gradle with temporary release signingConfig")
