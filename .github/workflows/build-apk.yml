@@ -81,29 +81,68 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x android/gradlew
 
-      - name: Sign release builds with the auto-generated debug key
-        # This makes the "release" build installable directly (same as a debug
-        # build's signing) without needing you to manage a keystore yourself.
-        # It is NOT suitable for publishing to the Google Play Store - see
-        # README.md for how to switch to a proper release keystore later.
+      - name: Generate temporary release keystore
+        # Creates a real (non-debug) self-signed keystore on the fly, right
+        # here in the workflow. This satisfies Amazon's "must not be signed
+        # with the Android Debug Certificate" rule with zero setup.
+        #
+        # IMPORTANT LIMITATION: this keystore is NOT saved anywhere, so a new
+        # one is generated on every run. That means each APK you download
+        # will have a DIFFERENT signature. Amazon/Google will treat every
+        # upload as a brand new, unrelated app - you will NOT be able to
+        # publish updates to the same app listing this way. This unblocks a
+        # first submission, but for real ongoing updates you eventually need
+        # one keystore that stays the same across builds.
+        run: |
+          keytool -genkeypair -v \
+            -keystore android/app/release.keystore \
+            -alias warranty-tracker \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass temporary123 -keypass temporary123 \
+            -dname "CN=Warranty Tracker, OU=App, O=Nazir Hussain, L=City, S=State, C=PK"
+
+      - name: Configure release signing with temporary keystore
         run: |
           python3 - <<'EOF'
           import pathlib
+
           p = pathlib.Path("android/app/build.gradle")
           content = p.read_text()
-          marker = "signingConfig signingConfigs.debug"
+
+          signing_config = '''
+          signingConfigs {
+              release {
+                  storeFile file("release.keystore")
+                  storePassword "temporary123"
+                  keyAlias "warranty-tracker"
+                  keyPassword "temporary123"
+              }
+          }
+          '''
+
+          if "signingConfigs {" not in content:
+              content = content.replace(
+                  "android {",
+                  "android {\n    " + signing_config.strip(),
+                  1,
+              )
+
+          marker = "signingConfig signingConfigs.release"
           if marker not in content:
               content = content.replace("release {", "release {\n            " + marker, 1)
-              p.write_text(content)
-              print("Patched build.gradle with release signingConfig")
-          else:
-              print("build.gradle already patched")
+
+          p.write_text(content)
+          print("Patched build.gradle with temporary release signingConfig")
           EOF
 
       - name: Build release APK
         run: |
           cd android
           ./gradlew assembleRelease --no-daemon
+
+      - name: Remove keystore from workspace
+        if: always()
+        run: rm -f android/app/release.keystore
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
