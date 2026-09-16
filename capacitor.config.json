@@ -1,0 +1,7 @@
+{
+  "appId": "com.warrantytracker.app",
+  "appName": "Warranty Tracker",
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "backgroundColor": "#0f172a"
+}

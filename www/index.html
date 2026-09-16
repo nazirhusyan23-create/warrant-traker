@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Warranty Tracker</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <h1>Warranty Tracker</h1>
+  <button id="addBtn" class="icon-btn" aria-label="Add purchase">+</button>
+</header>
+
+<main>
+  <section id="summary" class="summary">
+    <div class="stat">
+      <span class="stat-num" id="statUrgent">0</span>
+      <span class="stat-label">Expiring soon</span>
+    </div>
+    <div class="stat">
+      <span class="stat-num" id="statTotal">0</span>
+      <span class="stat-label">Tracked items</span>
+    </div>
+    <div class="stat">
+      <span class="stat-num" id="statSaved">$0</span>
+      <span class="stat-label">Value tracked</span>
+    </div>
+  </section>
+
+  <div class="filter-row">
+    <button class="filter-chip active" data-filter="all">All</button>
+    <button class="filter-chip" data-filter="returns">Returns</button>
+    <button class="filter-chip" data-filter="warranties">Warranties</button>
+    <button class="filter-chip" data-filter="expired">Expired</button>
+  </div>
+
+  <ul id="itemList" class="item-list"></ul>
+
+  <p id="emptyState" class="empty-state">
+    No purchases tracked yet.<br>Tap the + button to add your first item.
+  </p>
+</main>
+
+<div id="overlay" class="overlay hidden"></div>
+
+<div id="formSheet" class="sheet hidden">
+  <div class="sheet-header">
+    <h2 id="formTitle">Add purchase</h2>
+    <button id="closeForm" class="icon-btn" aria-label="Close">&times;</button>
+  </div>
+  <form id="itemForm">
+    <input type="hidden" id="itemId">
+
+    <label>Item name
+      <input type="text" id="itemName" placeholder="e.g. Sony Headphones" required>
+    </label>
+
+    <label>Retailer
+      <input type="text" id="retailer" placeholder="e.g. Amazon, Target, Best Buy">
+    </label>
+
+    <label>Price paid ($)
+      <input type="number" id="price" step="0.01" min="0" placeholder="0.00">
+    </label>
+
+    <label>Purchase date
+      <input type="date" id="purchaseDate" required>
+    </label>
+
+    <label>Return window (days)
+      <input type="number" id="returnDays" min="0" placeholder="e.g. 30">
+    </label>
+
+    <label>Warranty length (months)
+      <input type="number" id="warrantyMonths" min="0" placeholder="e.g. 12">
+    </label>
+
+    <label>Notes
+      <textarea id="notes" placeholder="Order #, receipt location, etc."></textarea>
+    </label>
+
+    <button type="submit" class="primary-btn">Save item</button>
+    <button type="button" id="deleteBtn" class="danger-btn hidden">Delete item</button>
+  </form>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
