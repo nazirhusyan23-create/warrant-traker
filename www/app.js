@@ -275,6 +275,43 @@ async function scheduleNotificationsFor(item) {
   }
 }
 
+// ---------- AdMob banner ----------
+const ADMOB_BANNER_ID = 'ca-app-pub-9502060049942116/2395408598';
+
+async function initAdMobBanner() {
+  try {
+    const { AdMob } = window.Capacitor?.Plugins || {};
+    if (!AdMob) return; // running in plain browser, skip
+
+    await AdMob.initialize();
+
+    // EU/UK consent flow (required by Google policy for users in those regions).
+    // If this fails for any reason, fall back to just showing the banner.
+    try {
+      let consentInfo = await AdMob.requestConsentInfo();
+      if (consentInfo.isConsentFormAvailable && consentInfo.status === 'REQUIRED') {
+        consentInfo = await AdMob.showConsentForm();
+      }
+      if (consentInfo.canRequestAds === false) return;
+    } catch (consentErr) {
+      console.warn('AdMob consent flow skipped', consentErr);
+    }
+
+    await AdMob.showBanner({
+      adId: ADMOB_BANNER_ID,
+      adSize: 'ADAPTIVE_BANNER',
+      position: 'BOTTOM_CENTER',
+      margin: 0,
+    });
+
+    // Reserve space so the banner never overlaps the item list / add button
+    document.body.classList.add('has-ad-banner');
+  } catch (e) {
+    console.warn('AdMob banner failed to load', e);
+  }
+}
+
 // ---------- Init ----------
 requestNotificationPermission();
+initAdMobBanner();
 render();

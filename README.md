@@ -35,24 +35,25 @@ git push -u origin main
 As soon as you push, GitHub Actions will automatically:
 1. Install dependencies
 2. Add the Android platform via Capacitor
-3. Build a debug APK with Gradle
-4. Upload it as a downloadable artifact
+3. Generate the app's custom icon and splash screen from `resources/icon.png`
+4. Build a **release** APK with Gradle (signed so it installs directly)
+5. Upload it as a downloadable artifact
 
 You can watch it happen under the **Actions** tab of your repo.
 
 ### Step 4 — Download the APK
 1. Go to your repo on GitHub → **Actions** tab
 2. Click the latest successful workflow run ("Build Android APK")
-3. Scroll down to **Artifacts** → download `warranty-tracker-debug-apk`
-4. Unzip it — you'll get `app-debug.apk`
+3. Scroll down to **Artifacts** → download `warranty-tracker-release-apk`
+4. Unzip it — you'll get `app-release.apk`
 
 ### Step 5 — Install it on your phone
-1. Transfer `app-debug.apk` to your Android phone (email it to yourself, use Google Drive, USB, etc.)
+1. Transfer `app-release.apk` to your Android phone (email it to yourself, use Google Drive, USB, etc.)
 2. On your phone, tap the APK file to install it
 3. Android will warn about "installing from unknown sources" — this is normal for apps not from the Play Store. Allow it for this file.
-4. Open the app — you're done.
+4. Open the app — you should see the custom shield icon and the app name, and the install/open flow should work the same as any normal app.
 
-This debug APK is **unsigned** and perfectly fine for installing on your own device or sharing with friends/testers. It is **not** suitable for uploading to the Google Play Store — that requires a signed release build (see below).
+**About the "release" signing used here:** this workflow signs the release APK using the same auto-generated debug key Android tooling creates on the fly, purely so the APK installs cleanly without you having to manage a keystore. It is a real release build (optimized build type, no "debug" banner), but it is **not** signed the way Play Store submissions require. For that you need your own keystore — see below.
 
 ---
 
@@ -62,13 +63,24 @@ This debug APK is **unsigned** and perfectly fine for installing on your own dev
 - Change the app name or package ID in `capacitor.config.json` before your first build.
 - Every push to `main` triggers a fresh APK build automatically.
 
+### Changing the app icon
+The icon is generated from files in `resources/`:
+- `icon.png` — 1024×1024 legacy fallback icon
+- `icon-foreground.png` / `icon-background.png` — adaptive icon layers (modern Android launchers)
+- `splash.png` / `splash-dark.png` — splash screen shown on app launch
+
+Replace these with your own artwork (keep the same filenames and sizes) and push — the workflow regenerates every Android icon size automatically via `@capacitor/assets`, no manual resizing needed.
+
 ## Publishing to the Google Play Store (optional, later)
 
-The debug APK from this workflow is great for testing but Play Store requires a **signed release build**. When you're ready:
-1. Generate a signing keystore (`keytool -genkey ...`)
-2. Add the keystore + `android/gradle.properties` signing config
-3. Change the workflow's build step to `./gradlew assembleRelease` (or `bundleRelease` for an `.aab`)
-4. Create a Google Play Console developer account ($25 one-time fee) and follow their submission flow
+The release APK this workflow produces is great for testing and personal/direct-install use, but the Play Store requires a build signed with your **own permanent keystore** (not the shared debug key this workflow currently uses). When you're ready:
+1. Generate a signing keystore (`keytool -genkey -v -keystore release.keystore -alias warrantytracker -keyalg RSA -keysize 2048 -validity 10000`)
+2. Store the keystore file + its passwords as GitHub Actions secrets (don't commit the keystore itself)
+3. Replace the workflow's "Sign release builds..." step with one that writes those secrets into `android/app/build.gradle`'s `signingConfigs.release` block instead of reusing `signingConfigs.debug`
+4. Optionally switch to `./gradlew bundleRelease` to produce an `.aab`, which Play Store prefers over a raw APK
+5. Create a Google Play Console developer account ($25 one-time fee) and follow their submission flow
+
+Happy to walk through this step by step whenever you're ready to publish for real.
 
 This is a separate, well-documented step — happy to walk through it once you're ready to publish.
 
@@ -79,3 +91,27 @@ The current app is a free local-only MVP. Natural next steps if you want to buil
 - Add a backend + account system so data syncs across devices
 - Add a "price adjustment" checker that watches for price drops on tracked items
 - Gate advanced features (auto-import, multi-device sync, unlimited items) behind a paid tier
+
+---
+
+## AdMob ads
+
+The app shows a banner ad at the bottom of the screen, powered by `@capacitor-community/admob`.
+
+- **Ad unit ID** is already wired in at `www/app.js` (`ADMOB_BANNER_ID`) — this is the real banner ID you gave me: `ca-app-pub-9502060049942116/2395408598`.
+- **App ID** (a separate ID, format `ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY`) is read from `admob-app-id.txt` at build time and injected into `AndroidManifest.xml` automatically. It is currently set to **Google's official test App ID**, so the build works right now and shows test ads. To show real ads:
+  1. Go to your [AdMob console](https://apps.admob.com/) → **Apps** → your app → **App settings** → copy the **App ID**
+  2. Open `admob-app-id.txt` and replace the last line with your real App ID (keep it as the only non-comment line)
+  3. Commit and push — the next build will use it
+
+If your app isn't registered in AdMob yet, add it there first (Apps → Add app), matching the package name `com.warrantytracker.app` set in `capacitor.config.json`.
+
+### About `app-ads.txt`
+The `app-ads.txt` file in this repo contains the entry you gave me:
+```
+google.com, pub-9502060049942116, DIRECT, f08c47fec0942fa0
+```
+This file is **not used by the app itself** — it has no effect inside the APK. It exists to verify ad-serving authorization for apps, and Google checks for it at `https://yourdomain.com/app-ads.txt` on the **website you list as your app's developer website** in the Play Console listing. If you don't have a developer website yet, host this one file there (even a single static page works) once you're ready to publish — otherwise AdMob may flag your inventory as unverified.
+
+### Ad placement note
+Google's AdMob policies require ads to be clearly distinguishable from content and not placed where they could be accidentally tapped. The current setup shows one adaptive banner anchored to the bottom of the screen, with the app's layout padded so it never overlaps the "+" button or list items — that's compliant. Avoid adding more ad units (interstitials, extra banners) without reviewing [AdMob's placement policies](https://support.google.com/admob/answer/6128877) first, since policy violations can get an account suspended.

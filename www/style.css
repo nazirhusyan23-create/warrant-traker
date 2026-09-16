@@ -170,6 +170,14 @@ main {
 
 .hidden { display: none !important; }
 
+body.has-ad-banner main {
+  padding-bottom: 64px;
+}
+
+body.has-ad-banner .sheet {
+  padding-bottom: calc(20px + 64px);
+}
+
 .overlay {
   position: fixed;
   inset: 0;
