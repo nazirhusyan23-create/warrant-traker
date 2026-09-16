@@ -99,12 +99,9 @@ The current app is a free local-only MVP. Natural next steps if you want to buil
 The app shows a banner ad at the bottom of the screen, powered by `@capacitor-community/admob`.
 
 - **Ad unit ID** is already wired in at `www/app.js` (`ADMOB_BANNER_ID`) — this is the real banner ID you gave me: `ca-app-pub-9502060049942116/2395408598`.
-- **App ID** (a separate ID, format `ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY`) is read from `admob-app-id.txt` at build time and injected into `AndroidManifest.xml` automatically. It is currently set to **Google's official test App ID**, so the build works right now and shows test ads. To show real ads:
-  1. Go to your [AdMob console](https://apps.admob.com/) → **Apps** → your app → **App settings** → copy the **App ID**
-  2. Open `admob-app-id.txt` and replace the last line with your real App ID (keep it as the only non-comment line)
-  3. Commit and push — the next build will use it
+- **App ID** (a separate ID, format `ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY`) is read from `admob-app-id.txt` at build time and injected into `AndroidManifest.xml` automatically. It is currently set to your real App ID: `ca-app-pub-9502060049942116~7801357520`. If you ever need to change it (new app, different AdMob account), edit that file and push.
 
-If your app isn't registered in AdMob yet, add it there first (Apps → Add app), matching the package name `com.warrantytracker.app` set in `capacitor.config.json`.
+Before real ads will actually serve, double-check in the [AdMob console](https://apps.admob.com/) that the app this App ID belongs to has its **package name set to `com.warrantytracker.app`** (or whatever you change `appId` to in `capacitor.config.json`) — a mismatch here is the most common reason ads don't show even with a correct App ID.
 
 ### About `app-ads.txt`
 The `app-ads.txt` file in this repo contains the entry you gave me:

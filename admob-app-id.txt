@@ -1,9 +1,7 @@
 # AdMob App ID for this app.
-# Currently set to Google's official TEST App ID, so builds work and test ads
-# show immediately. Real ads will NOT serve until you replace this.
 #
 # Get your real App ID from: AdMob console -> Apps -> [your app] -> App settings -> App ID
 # Format looks like: ca-app-pub-9502060049942116~XXXXXXXXXX  (note the ~, different from your ad unit ID)
 #
 # Put ONLY the App ID on the line below (no quotes), then commit + push.
-ca-app-pub-3940256099942544~3347511713
+ca-app-pub-9502060049942116~7801357520
