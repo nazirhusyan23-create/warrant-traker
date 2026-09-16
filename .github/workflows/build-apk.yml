@@ -30,19 +30,83 @@ jobs:
       - name: Add Android platform (if not already present)
         run: npx cap add android || npx cap sync android
 
+      - name: Generate app icon & splash screen from resources/
+        run: npx @capacitor/assets generate --android
+
       - name: Sync web assets into Android project
         run: npx cap sync android
+
+      - name: Insert AdMob App ID into AndroidManifest.xml
+        run: |
+          python3 - <<'EOF'
+          import pathlib, re
+
+          app_id_file = pathlib.Path("admob-app-id.txt")
+          app_id = None
+          for line in app_id_file.read_text().splitlines():
+              line = line.strip()
+              if line and not line.startswith("#"):
+                  app_id = line
+                  break
+          if not app_id:
+              raise SystemExit("No AdMob App ID found in admob-app-id.txt")
+
+          manifest_path = pathlib.Path("android/app/src/main/AndroidManifest.xml")
+          content = manifest_path.read_text()
+
+          meta_data = (
+              '\n    <meta-data\n'
+              '        android:name="com.google.android.gms.ads.APPLICATION_ID"\n'
+              f'        android:value="{app_id}" />\n'
+          )
+
+          if "com.google.android.gms.ads.APPLICATION_ID" in content:
+              content = re.sub(
+                  r'android:name="com\.google\.android\.gms\.ads\.APPLICATION_ID"\s+android:value="[^"]*"',
+                  f'android:name="com.google.android.gms.ads.APPLICATION_ID"\n        android:value="{app_id}"',
+                  content,
+              )
+          else:
+              content = re.sub(
+                  r'(<application[^>]*>)',
+                  r'\1' + meta_data,
+                  content,
+                  count=1,
+              )
+
+          manifest_path.write_text(content)
+          print(f"AndroidManifest.xml patched with AdMob App ID: {app_id}")
+          EOF
 
       - name: Make gradlew executable
         run: chmod +x android/gradlew
 
-      - name: Build debug APK
+      - name: Sign release builds with the auto-generated debug key
+        # This makes the "release" build installable directly (same as a debug
+        # build's signing) without needing you to manage a keystore yourself.
+        # It is NOT suitable for publishing to the Google Play Store - see
+        # README.md for how to switch to a proper release keystore later.
+        run: |
+          python3 - <<'EOF'
+          import pathlib
+          p = pathlib.Path("android/app/build.gradle")
+          content = p.read_text()
+          marker = "signingConfig signingConfigs.debug"
+          if marker not in content:
+              content = content.replace("release {", "release {\n            " + marker, 1)
+              p.write_text(content)
+              print("Patched build.gradle with release signingConfig")
+          else:
+              print("build.gradle already patched")
+          EOF
+
+      - name: Build release APK
         run: |
           cd android
-          ./gradlew assembleDebug --no-daemon
+          ./gradlew assembleRelease --no-daemon
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: warranty-tracker-debug-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: warranty-tracker-release-apk
+          path: android/app/build/outputs/apk/release/app-release.apk
