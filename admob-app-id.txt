@@ -4,4 +4,4 @@
 # Format looks like: ca-app-pub-9502060049942116~XXXXXXXXXX  (note the ~, different from your ad unit ID)
 #
 # Put ONLY the App ID on the line below (no quotes), then commit + push.
-ca-app-pub-9502060049942116~7801357520
+ca-app-pub-9502060049942116~8070140208

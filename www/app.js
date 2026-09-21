@@ -277,8 +277,8 @@ async function scheduleNotificationsFor(item) {
 }
 
 // ---------- AdMob banner & interstitial ----------
-const ADMOB_BANNER_ID = 'ca-app-pub-9502060049942116/2395408598';
-const ADMOB_INTERSTITIAL_ID = 'ca-app-pub-9502060049942116/2908570604';
+const ADMOB_BANNER_ID = 'ca-app-pub-9502060049942116/7457650702';
+const ADMOB_INTERSTITIAL_ID = 'ca-app-pub-9502060049942116/4831487368';
 
 let interstitialReady = false;
 let deleteCountSinceAd = 0;

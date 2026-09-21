@@ -98,9 +98,9 @@ The current app is a free local-only MVP. Natural next steps if you want to buil
 
 The app shows a banner ad at the bottom of the screen, and an interstitial ad every 3rd item deletion, both powered by `@capacitor-community/admob`.
 
-- **Banner ad unit ID** is wired in at `www/app.js` (`ADMOB_BANNER_ID`): `ca-app-pub-9502060049942116/2395408598`.
-- **Interstitial ad unit ID** is wired in at `www/app.js` (`ADMOB_INTERSTITIAL_ID`): `ca-app-pub-9502060049942116/2908570604`. It preloads on launch and shows after every 3rd item deletion, then preloads the next one.
-- **App ID** (a separate ID, format `ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY`) is read from `admob-app-id.txt` at build time and injected into `AndroidManifest.xml` automatically. It is currently set to your real App ID: `ca-app-pub-9502060049942116~7801357520`. If you ever need to change it (new app, different AdMob account), edit that file and push.
+- **Banner ad unit ID** is wired in at `www/app.js` (`ADMOB_BANNER_ID`): `ca-app-pub-9502060049942116/7457650702`.
+- **Interstitial ad unit ID** is wired in at `www/app.js` (`ADMOB_INTERSTITIAL_ID`): `ca-app-pub-9502060049942116/4831487368`. It preloads on launch and shows after every 3rd item deletion, then preloads the next one.
+- **App ID** (a separate ID, format `ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY`) is read from `admob-app-id.txt` at build time and injected into `AndroidManifest.xml` automatically. It is currently set to your real App ID: `ca-app-pub-9502060049942116~8070140208`. If you ever need to change it (new app, different AdMob account), edit that file and push.
 
 Before real ads will actually serve, double-check in the [AdMob console](https://apps.admob.com/) that the app this App ID belongs to has its **package name set to `com.warrantytracker.app`** (or whatever you change `appId` to in `capacitor.config.json`) — a mismatch here is the most common reason ads don't show even with a correct App ID.
 
