@@ -30,6 +30,32 @@ jobs:
       - name: Add Android platform (if not already present)
         run: npx cap add android || npx cap sync android
 
+      - name: Set Android versionCode & versionName from package.json
+        # Amazon/Google both reject an upload whose versionCode is not
+        # strictly higher than your last published build. Instead of
+        # hand-editing android/app/build.gradle every time, this derives
+        # both values from the "version" field in package.json, so bumping
+        # that one field (e.g. 1.0.0 -> 2.0.0) is all you need to do.
+        run: |
+          python3 - <<'EOF'
+          import json, pathlib, re
+
+          pkg = json.loads(pathlib.Path("package.json").read_text())
+          version_name = pkg["version"]  # e.g. "2.0.0"
+
+          major, minor, patch = (list(map(int, version_name.split("."))) + [0, 0])[:3]
+          version_code = major * 10000 + minor * 100 + patch  # 2.0.0 -> 20000
+
+          gradle_path = pathlib.Path("android/app/build.gradle")
+          content = gradle_path.read_text()
+
+          content = re.sub(r'versionCode \d+', f'versionCode {version_code}', content)
+          content = re.sub(r'versionName "[^"]*"', f'versionName "{version_name}"', content)
+
+          gradle_path.write_text(content)
+          print(f"Set versionCode={version_code}, versionName={version_name}")
+          EOF
+
       - name: Generate app icon & splash screen from resources/
         run: npx @capacitor/assets generate --android
 
