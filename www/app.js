@@ -223,6 +223,7 @@ document.getElementById('deleteBtn').addEventListener('click', () => {
   saveItems(items);
   render();
   closeForm();
+  maybeShowInterstitial();
 });
 
 // ---------- Filters ----------
@@ -275,8 +276,12 @@ async function scheduleNotificationsFor(item) {
   }
 }
 
-// ---------- AdMob banner ----------
+// ---------- AdMob banner & interstitial ----------
 const ADMOB_BANNER_ID = 'ca-app-pub-9502060049942116/2395408598';
+const ADMOB_INTERSTITIAL_ID = 'ca-app-pub-9502060049942116/2908570604';
+
+let interstitialReady = false;
+let deleteCountSinceAd = 0;
 
 async function initAdMobBanner() {
   try {
@@ -306,8 +311,41 @@ async function initAdMobBanner() {
 
     // Reserve space so the banner never overlaps the item list / add button
     document.body.classList.add('has-ad-banner');
+
+    // Preload the first interstitial in the background.
+    prepareInterstitial();
   } catch (e) {
     console.warn('AdMob banner failed to load', e);
+  }
+}
+
+async function prepareInterstitial() {
+  try {
+    const { AdMob } = window.Capacitor?.Plugins || {};
+    if (!AdMob) return;
+    await AdMob.prepareInterstitial({ adId: ADMOB_INTERSTITIAL_ID });
+    interstitialReady = true;
+  } catch (e) {
+    interstitialReady = false;
+    console.warn('AdMob interstitial failed to preload', e);
+  }
+}
+
+// Shows an interstitial occasionally (every 3rd deletion) so it never feels intrusive.
+async function maybeShowInterstitial() {
+  try {
+    const { AdMob } = window.Capacitor?.Plugins || {};
+    if (!AdMob || !interstitialReady) return;
+
+    deleteCountSinceAd += 1;
+    if (deleteCountSinceAd < 3) return;
+    deleteCountSinceAd = 0;
+
+    await AdMob.showInterstitial();
+    interstitialReady = false;
+    prepareInterstitial(); // preload the next one
+  } catch (e) {
+    console.warn('AdMob interstitial failed to show', e);
   }
 }
 

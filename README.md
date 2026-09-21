@@ -96,19 +96,29 @@ The current app is a free local-only MVP. Natural next steps if you want to buil
 
 ## AdMob ads
 
-The app shows a banner ad at the bottom of the screen, powered by `@capacitor-community/admob`.
+The app shows a banner ad at the bottom of the screen, and an interstitial ad every 3rd item deletion, both powered by `@capacitor-community/admob`.
 
-- **Ad unit ID** is already wired in at `www/app.js` (`ADMOB_BANNER_ID`) — this is the real banner ID you gave me: `ca-app-pub-9502060049942116/2395408598`.
+- **Banner ad unit ID** is wired in at `www/app.js` (`ADMOB_BANNER_ID`): `ca-app-pub-9502060049942116/2395408598`.
+- **Interstitial ad unit ID** is wired in at `www/app.js` (`ADMOB_INTERSTITIAL_ID`): `ca-app-pub-9502060049942116/2908570604`. It preloads on launch and shows after every 3rd item deletion, then preloads the next one.
 - **App ID** (a separate ID, format `ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY`) is read from `admob-app-id.txt` at build time and injected into `AndroidManifest.xml` automatically. It is currently set to your real App ID: `ca-app-pub-9502060049942116~7801357520`. If you ever need to change it (new app, different AdMob account), edit that file and push.
 
 Before real ads will actually serve, double-check in the [AdMob console](https://apps.admob.com/) that the app this App ID belongs to has its **package name set to `com.warrantytracker.app`** (or whatever you change `appId` to in `capacitor.config.json`) — a mismatch here is the most common reason ads don't show even with a correct App ID.
 
-### About `app-ads.txt`
+### About `app-ads.txt` — and getting a free domain to host it
 The `app-ads.txt` file in this repo contains the entry you gave me:
 ```
 google.com, pub-9502060049942116, DIRECT, f08c47fec0942fa0
 ```
-This file is **not used by the app itself** — it has no effect inside the APK. It exists to verify ad-serving authorization for apps, and Google checks for it at `https://yourdomain.com/app-ads.txt` on the **website you list as your app's developer website** in the Play Console listing. If you don't have a developer website yet, host this one file there (even a single static page works) once you're ready to publish — otherwise AdMob may flag your inventory as unverified.
+This file is **not used by the app itself** — it has no effect inside the APK. It exists to verify ad-serving authorization, and Google/Amazon check for it at `https://yourdomain.com/app-ads.txt` on the **website you list as your app's developer website** in the store listing.
+
+If you don't already own a domain, the free way to get one is **GitHub Pages**, which gives you `https://your-username.github.io` at no cost:
+
+1. On GitHub, create a **new, separate repo** named exactly `your-username.github.io` (replace with your real GitHub username — this exact name is what makes it a root-level Pages site instead of a sub-path).
+2. Upload just one file to it: `app-ads.txt`, with the same content shown above.
+3. Go to that repo's **Settings → Pages**, set source to the `main` branch, save. After a minute, `https://your-username.github.io/app-ads.txt` will be live.
+4. Put `https://your-username.github.io` as your **developer website** in the Google Play Console / Amazon Developer Console app listing.
+
+(Don't use *this* project's repo for that — Project Pages serve at `username.github.io/repo-name/`, a sub-path, which some crawlers won't treat as domain root. The separate `username.github.io` repo is the one that serves at the true root.)
 
 ### Ad placement note
-Google's AdMob policies require ads to be clearly distinguishable from content and not placed where they could be accidentally tapped. The current setup shows one adaptive banner anchored to the bottom of the screen, with the app's layout padded so it never overlaps the "+" button or list items — that's compliant. Avoid adding more ad units (interstitials, extra banners) without reviewing [AdMob's placement policies](https://support.google.com/admob/answer/6128877) first, since policy violations can get an account suspended.
+Google's AdMob policies require ads to be clearly distinguishable from content and not placed where they could be accidentally tapped. The current setup shows one adaptive banner anchored to the bottom of the screen (padded so it never overlaps the "+" button or list items), plus an interstitial that appears after every 3rd item deletion — a natural break point, not mid-task. Review [AdMob's placement policies](https://support.google.com/admob/answer/6128877) if you add more ad units later, since policy violations can get an account suspended.

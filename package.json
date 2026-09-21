@@ -1,6 +1,6 @@
 {
   "name": "warranty-tracker",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Track return windows and warranty deadlines so you never lose money on a missed return or unclaimed warranty again.",
   "scripts": {
     "build": "echo 'Static app - no build step needed'"
